@@ -21,7 +21,7 @@ var $,
 // Variables
 var $excel_btn,
     addInterval,
-    columnHeadings = ['List', 'Title', 'Description', 'Points', 'Due', 'Members', 'Labels', 'Card #', 'Card URL'];
+    columnHeadings = ['List', 'Title', 'Description', 'Points', 'Due', 'Members', 'Labels', 'Values', 'Card #', 'Card URL'];
 
 window.URL = window.webkitURL || window.URL;
 
@@ -40,8 +40,9 @@ function createExcelExport() {
 	}
 
 	var idBoard = parts[1];
-	var apiURL = "https://trello.com/1/boards/" + idBoard + "?lists=all&cards=all&card_attachments=cover&card_stickers=true&card_fields=badges%2Cclosed%2CdateLastActivity%2Cdesc%2CdescData%2Cdue%2CidAttachmentCover%2CidList%2CidBoard%2CidMembers%2CidShort%2Clabels%2CidLabels%2Cname%2Cpos%2CshortUrl%2CshortLink%2Csubscribed%2Curl&card_checklists=none&members=all&member_fields=fullName%2Cinitials%2CmemberType%2Cusername%2CavatarHash%2Cbio%2CbioData%2Cconfirmed%2Cproducts%2Curl%2Cstatus&membersInvited=all&membersInvited_fields=fullName%2Cinitials%2CmemberType%2Cusername%2CavatarHash%2Cbio%2CbioData%2Cconfirmed%2Cproducts%2Curl&checklists=none&organization=true&organization_fields=name%2CdisplayName%2Cdesc%2CdescData%2Curl%2Cwebsite%2Cprefs%2Cmemberships%2ClogoHash%2Cproducts&myPrefs=true&fields=name%2Cclosed%2CdateLastActivity%2CdateLastView%2CidOrganization%2Cprefs%2CshortLink%2CshortUrl%2Curl%2Cdesc%2CdescData%2Cinvitations%2Cinvited%2ClabelNames%2Cmemberships%2Cpinned%2CpowerUps%2Csubscribed";
-
+	// var apiURL = "https://trello.com/1/boards/" + idBoard + "?lists=all&cards=all&card_attachments=cover&card_stickers=true&card_fields=badges%2Cclosed%2CdateLastActivity%2Cdesc%2CdescData%2Cdue%2CidAttachmentCover%2CidList%2CidBoard%2CidMembers%2CidShort%2Clabels%2CidLabels%2Cname%2Cpos%2CshortUrl%2CshortLink%2Csubscribed%2Curl&card_checklists=none&members=all&member_fields=fullName%2Cinitials%2CmemberType%2Cusername%2CavatarHash%2Cbio%2CbioData%2Cconfirmed%2Cproducts%2Curl%2Cstatus&membersInvited=all&membersInvited_fields=fullName%2Cinitials%2CmemberType%2Cusername%2CavatarHash%2Cbio%2CbioData%2Cconfirmed%2Cproducts%2Curl&checklists=none&organization=true&organization_fields=name%2CdisplayName%2Cdesc%2CdescData%2Curl%2Cwebsite%2Cprefs%2Cmemberships%2ClogoHash%2Cproducts&myPrefs=true&fields=name%2Cclosed%2CdateLastActivity%2CdateLastView%2CidOrganization%2Cprefs%2CshortLink%2CshortUrl%2Curl%2Cdesc%2CdescData%2Cinvitations%2Cinvited%2ClabelNames%2Cmemberships%2Cpinned%2CpowerUps%2Csubscribed";
+	var apiURL = "https://trello.com/b/" + idBoard + ".json"
+    
     $.getJSON(apiURL, function (data) {
 
         var file = {
@@ -94,6 +95,7 @@ function createExcelExport() {
                         memberIDs,
                         memberInitials = [],
                         labels = [],
+                        values = [],
                         d = new Date(due),
                         rowData = [],
                         rArch,
@@ -122,7 +124,14 @@ function createExcelExport() {
                         } else {
                             labels.push(label.color);
                         }
+                    });
 
+                    //Get all custom values
+                    $.each(card.pluginData, function (i, pluginData) {
+                        if (pluginData.value) {
+                            let value = pluginData.value.replace(/{|}|\[|\]|"/g, "");
+                            values.push(value);
+                        }
                     });
 
                     // Need to set dates to the Date type so xlsx.js sets the right datatype
@@ -138,6 +147,7 @@ function createExcelExport() {
                         due,
                         memberInitials.toString(),
                         labels.toString(),
+                        values.toString(),
                         card.idShort,
 						card.shortUrl
                     ];
@@ -174,8 +184,6 @@ function createExcelExport() {
         board_title = data.name;
         saveAs(blob, board_title + '.xlsx');
         $("a.pop-over-header-close-btn")[0].click();
-
-
     });
 
 }
